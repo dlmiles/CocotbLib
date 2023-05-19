@@ -1,7 +1,10 @@
+import os
 import random
 import time
+from numbers import Number
 
 import cocotb
+from cocotb.utils import get_sim_time
 from cocotb.binary import BinaryValue
 from cocotb.handle import NonHierarchyObject
 from cocotb.result import TestFailure
@@ -110,12 +113,6 @@ def ClockDomainAsyncReset(clk, reset, period=1000):
         yield Timer(period / 2)
         clk.value = 1
         yield Timer(period / 2)
-
-
-@coroutine
-def SimulationTimeout(duration):
-    yield Timer(duration)
-    raise TestFailure("Simulation timeout")
 
 
 @coroutine
@@ -303,6 +300,31 @@ def waitClockedCond(clk, cond):
 def TimerClk(clk, count):
     for i in range(count):
         yield RisingEdge(clk)
+
+
+simulation_timeout_task_handle = None
+
+
+# Note @cocotb.test(timeout_time=5, timeout_unit="sec") does seem to exist now since 1.3
+# It is also documented that @cocotb.test(timeout=1234567) is not implemented
+# But this method allows a default to be inherited from CI ENV $COCOTB_TIMEOUT
+def set_timeout(value: Number = None, units: str = "step") -> None:
+    @coroutine
+    def simulation_timeout_task(duration: Number, units: str = "step") -> None:
+        assert type(duration) is Number and duration > 0, f"type()={type(value)} is not a Number or greater than 0: {value}"
+        yield Timer(time=duration, units=units)
+        assert False, f"Simulation timeout occurred at {get_sim_time()} due to set_timeout({duration})"
+
+    global simulation_timeout_task_handle
+    if simulation_timeout_task_handle is not None:
+        raise Exception(f"set_timeout({value}) called but simulation_timeout_task already created")
+    if value is None and "COCOTB_TIMEOUT" in os.environ:
+        value = int(os.environ["COCOTB_TIMEOUT"])
+        units = "sec"
+    if value is None:  # default timeout ensure CI progress
+        value = 15
+        units = "sec"
+    simulation_timeout_task_handle = cocotb.start(simulation_timeout_task(value, units=units))
 
 
 # Can pass in a signal-like object, or BinaryValue or string value
