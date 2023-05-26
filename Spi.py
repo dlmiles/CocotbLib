@@ -74,4 +74,4 @@ class SpiSlaveMaster:
     def exchangeCheck(self, masterData, slaveData):
         c = self.exchange(masterData)
         yield c
-        assert slaveData == int(c.retval, 2)
+        assert slaveData == int(c.result(), 2)
