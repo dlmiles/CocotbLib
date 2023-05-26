@@ -43,7 +43,7 @@ class Apb3:
     def writeMasked(self, address, data, mask, sel=1):
         readThread = self.read(address, sel)
         yield readThread
-        yield self.write(address, (readThread.retval & ~mask) | (data & mask), sel)
+        yield self.write(address, (readThread.result() & ~mask) | (data & mask), sel)
 
     @coroutine
     def read(self, address, sel=1):
@@ -65,18 +65,18 @@ class Apb3:
     def readAssert(self, address, data, sel=1):
         readThread = self.read(address, sel)
         yield readThread
-        assertEquals(int(readThread.retval), data, " APB readAssert failure")
+        assertEquals(int(readThread.result()), data, " APB readAssert failure")
 
     @coroutine
     def readAssertMasked(self, address, data, mask, sel=1):
         readThread = self.read(address, sel)
         yield readThread
-        assertEquals(int(readThread.retval) & mask, data, " APB readAssert failure")
+        assertEquals(int(readThread.result()) & mask, data, " APB readAssert failure")
 
     @coroutine
     def pull(self, address, dataValue, dataMask, sel=1):
         while True:
             readThread = self.read(address, sel)
             yield readThread
-            if (int(readThread.retval) & dataMask) == dataValue:
+            if (int(readThread.result()) & dataMask) == dataValue:
                 break
