@@ -1,4 +1,3 @@
-from cocotb.result import ReturnValue
 from cocotb.triggers import Timer
 from cocotb.decorators import coroutine
 
@@ -69,7 +68,7 @@ class SpiSlaveMaster:
                 self.spi.sclk.value = self.cpol
                 yield Timer(self.baudPeriode >> 1)
 
-        raise ReturnValue(buffer)
+        return buffer
 
     @coroutine
     def exchangeCheck(self, masterData, slaveData):
