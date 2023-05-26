@@ -1,4 +1,3 @@
-from cocotb.result import ReturnValue
 from cocotb.triggers import RisingEdge
 from cocotb.decorators import coroutine
 
@@ -60,7 +59,7 @@ class Apb3:
         self.PSEL.value = 0
         randSignal(self.PENABLE)
         randSignal(self.PWRITE)
-        raise ReturnValue(int(self.PRDATA))
+        return int(self.PRDATA)
 
     @coroutine
     def readAssert(self, address, data, sel=1):
